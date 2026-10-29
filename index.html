@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste das 5 Linguagens do Amor - Instituto INJAVI</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React & React DOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel para compilar JSX no navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Recharts JS para Gráficos -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+  <!-- html2pdf.js para Download Direto de PDF sem falhas de iFrame -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased p-2 sm:p-4">
+
+  <!-- Container Raiz -->
+  <div id="root" class="w-full max-w-4xl mx-auto"></div>
+
+  <!-- Código React -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    const { 
+      BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer 
+    } = window.Recharts;
+
+    // As 30 duplas de afirmativas com o mapeamento oficial de Gary Chapman (A à E)
+    // A: Palavras de Afirmação | B: Tempo de Qualidade | C: Receber Presentes | D: Atos de Serviço | E: Toque Físico
+    const QUESTIONS = [
+      { id: 1, optionA: { text: "Gosto de receber bilhetes ou mensagens de carinho.", lang: "A" }, optionB: { text: "Gosto de ser abraçado(a) pela pessoa que amo.", lang: "E" } },
+      { id: 2, optionA: { text: "Gosto de passar tempo a sós com quem eu amo.", lang: "B" }, optionB: { text: "Sinto-me amado(a) quando me ajudam em tarefas práticas.", lang: "D" } },
+      { id: 3, optionA: { text: "Gosto de receber presentes especiais.", lang: "C" }, optionB: { text: "Gosto de dar passeios e viajar com quem amo.", lang: "B" } },
+      { id: 4, optionA: { text: "Sinto-me amado(a) quando fazem tarefas para me ajudar.", lang: "D" }, optionB: { text: "Sinto-me amado(a) quando me tocam ou seguram minha mão.", lang: "E" } },
+      { id: 5, optionA: { text: "Sinto-me amado(a) quando me abraçam bem forte.", lang: "E" }, optionB: { text: "Sinto-me amado(a) quando sou surpreendido(a) com presentes.", lang: "C" } },
+      { id: 6, optionA: { text: "Gosto de sair e fazer coisas de que ambos gostamos.", lang: "B" }, optionB: { text: "Gosto de dar as mãos para a pessoa que amamos.", lang: "E" } },
+      { id: 7, optionA: { text: "Símbolos visíveis de amor (presentes) são importantes para mim.", lang: "C" }, optionB: { text: "Sinto-me valorizado(a) quando recebo elogios sinceros.", lang: "A" } },
+      { id: 8, optionA: { text: "Gosto de me sentar bem perto da pessoa que amo.", lang: "E" }, optionB: { text: "Gosto quando me dizem que sou atraente e importante.", lang: "A" } },
+      { id: 9, optionA: { text: "Gosto de passar tempo conversando e fazendo planos juntos.", lang: "B" }, optionB: { text: "Gosto de receber pequenos mimos ou lembrancinhas.", lang: "C" } },
+      { id: 10, optionA: { text: "Suas palavras de incentivo me dão confiança.", lang: "A" }, optionB: { text: "Sei que me ama quando me ajuda sem eu precisar pedir.", lang: "D" } },
+      { id: 11, optionA: { text: "Gosto de fazer atividades e projetos em conjunto.", lang: "B" }, optionB: { text: "Gosto quando dizem palavras gentis e carinhosas.", lang: "A" } },
+      { id: 12, optionA: { text: "O que a pessoa faz por mim me afeta mais do que o que fala.", lang: "D" }, optionB: { text: "Abraços me fazem sentir acolhido(a) e completo(a).", lang: "E" } },
+      { id: 13, optionA: { text: "Valorizo o reconhecimento e fujo das críticas.", lang: "A" }, optionB: { text: "Vários presentes pequenos significam mais que um grande.", lang: "C" } },
+      { id: 14, optionA: { text: "Sinto-me próximo(a) quando conversamos abertamente.", lang: "B" }, optionB: { text: "Sinto-me mais próximo(a) quando há contato físico constante.", lang: "E" } },
+      { id: 15, optionA: { text: "Gosto que elogiem minhas conquistas e esforços.", lang: "A" }, optionB: { text: "Sei que me ama quando faz coisas difíceis para me aliviar.", lang: "D" } },
+      { id: 16, optionA: { text: "Gosto de toques afetuosos enquanto passamos um pelo outro.", lang: "E" }, optionB: { text: "Gosto quando me escutam com atenção e empatia.", lang: "B" } },
+      { id: 17, optionA: { text: "Sinto-me amado(a) quando me ajudam nas tarefas de casa.", lang: "D" }, optionB: { text: "Adoro a sensação de receber um presente pensado para mim.", lang: "C" } },
+      { id: 18, optionA: { text: "Gosto quando elogiam minha aparência e estilo.", lang: "A" }, optionB: { text: "Sinto-me amado(a) quando tiram tempo para ouvir meus sentimentos.", lang: "B" } },
+      { id: 19, optionA: { text: "Sinto-me seguro(a) com toques físicos frequentes.", lang: "E" }, optionB: { text: "Atos de serviço práticos me fazem sentir amado(a).", lang: "D" } },
+      { id: 20, optionA: { text: "Aprecio as inúmeras pequenas coisas práticas que fazem por mim.", lang: "D" }, optionB: { text: "Aprecio receber coisas feitas à mão ou escolhidas a dedo.", lang: "C" } },
+      { id: 21, optionA: { text: "Amo a sensação de ter a atenção total e sem distrações.", lang: "B" }, optionB: { text: "Amo quando realizam uma tarefa pesada por mim.", lang: "D" } },
+      { id: 22, optionA: { text: "Sinto-me amado(a) quando celebram datas com presentes.", lang: "C" }, optionB: { text: "Sinto-me amado(a) quando celebram datas com palavras bonitas.", lang: "A" } },
+      { id: 23, optionA: { text: "Sei que pensaram em mim quando ganho uma lembrança.", lang: "C" }, optionB: { text: "Sinto-me amado(a) quando colaboram com minhas responsabilidades.", lang: "D" } },
+      { id: 24, optionA: { text: "Aprecio quando me ouvem com paciência e sem interromper.", lang: "B" }, optionB: { text: "Aprecio quando lembram de datas especiais com presentes.", lang: "C" } },
+      { id: 25, optionA: { text: "Gosto de saber que se preocupam em me ajudar na rotina.", lang: "D" }, optionB: { text: "Gosto de fazer viagens e passeios longos a sós.", lang: "B" } },
+      { id: 26, optionA: { text: "Um beijo surpresa me faz sentir extremamente amado(a).", lang: "E" }, optionB: { text: "Um presente sem motivo especial me deixa radiante.", lang: "C" } },
+      { id: 27, optionA: { text: "Gosto de escutar palavras explícitas de gratidão.", lang: "A" }, optionB: { text: "Gosto quando olham nos meus olhos enquanto conversamos.", lang: "B" } },
+      { id: 28, optionA: { text: "Presentes recebidos têm um significado muito forte para mim.", lang: "C" }, optionB: { text: "Sinto-me pleno(a) com abraços, carinhos e cafuné.", lang: "E" } },
+      { id: 29, optionA: { text: "Sinto-me amado(a) quando cumprem um pedido meu com boa vontade.", lang: "D" }, optionB: { text: "Sinto-me amado(a) quando me dizem o quanto me valorizam.", lang: "A" } },
+      { id: 30, optionA: { text: "Sinto necessidade diária de contato e toque físico.", lang: "E" }, optionB: { text: "Sinto necessidade diária de palavras encorajadoras.", lang: "A" } }
+    ];
+
+    const LANGUAGES_INFO = {
+      A: { code: "A", title: "Palavras de Afirmação", icon: "💬", color: "#ec4899", bgClass: "bg-pink-50 border-pink-200 text-pink-800" },
+      B: { code: "B", title: "Tempo de Qualidade", icon: "⏳", color: "#8b5cf6", bgClass: "bg-purple-50 border-purple-200 text-purple-800" },
+      C: { code: "C", title: "Receber Presentes", icon: "🎁", color: "#f59e0b", bgClass: "bg-amber-50 border-amber-200 text-amber-800" },
+      D: { code: "D", title: "Atos de Serviço", icon: "🛠️", color: "#10b981", bgClass: "bg-emerald-50 border-emerald-200 text-emerald-800" },
+      E: { code: "E", title: "Toque Físico", icon: "🤝", color: "#ef4444", bgClass: "bg-rose-50 border-rose-200 text-rose-800" }
+    };
+
+    function App() {
+      const reportRef = useRef(null);
+
+      const [currentUserRole, setCurrentUserRole] = useState('person1');
+      const [person1Name, setPerson1Name] = useState('Pessoa 1');
+      const [person1Answers, setPerson1Answers] = useState({});
+      const [isPerson1Completed, setIsPerson1Completed] = useState(false);
+
+      const [person2Name, setPerson2Name] = useState('Cônjuge');
+      const [person2Answers, setPerson2Answers] = useState({});
+      const [isPerson2Completed, setIsPerson2Completed] = useState(false);
+
+      const [spouseBirthdate, setSpouseBirthdate] = useState('');
+      const [anniversaryDate, setAnniversaryDate] = useState('');
+
+      const [answers, setAnswers] = useState({});
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [isStarted, setIsStarted] = useState(false);
+      const [isCompleted, setIsCompleted] = useState(false);
+      const [activeTab, setActiveTab] = useState('comparison');
+      const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+      const [pdfMessage, setPdfMessage] = useState('');
+
+      useEffect(() => {
+        const savedData = localStorage.getItem('love_language_duo_app_data');
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            if (parsed.person1Name) setPerson1Name(parsed.person1Name);
+            if (parsed.person1Answers) setPerson1Answers(parsed.person1Answers);
+            if (parsed.isPerson1Completed !== undefined) setIsPerson1Completed(parsed.isPerson1Completed);
+
+            if (parsed.person2Name) setPerson2Name(parsed.person2Name);
+            if (parsed.person2Answers) setPerson2Answers(parsed.person2Answers);
+            if (parsed.isPerson2Completed !== undefined) setIsPerson2Completed(parsed.isPerson2Completed);
+
+            if (parsed.spouseBirthdate) setSpouseBirthdate(parsed.spouseBirthdate);
+            if (parsed.anniversaryDate) setAnniversaryDate(parsed.anniversaryDate);
+
+            if (parsed.currentUserRole) setCurrentUserRole(parsed.currentUserRole);
+            if (parsed.answers) setAnswers(parsed.answers);
+            if (parsed.currentIndex !== undefined) setCurrentIndex(parsed.currentIndex);
+            if (parsed.isStarted !== undefined) setIsStarted(parsed.isStarted);
+            if (parsed.isCompleted !== undefined) setIsCompleted(parsed.isCompleted);
+          } catch (e) {
+            console.error("Erro ao carregar localStorage", e);
+          }
+        }
+      }, []);
+
+      useEffect(() => {
+        const dataToSave = {
+          person1Name, person1Answers, isPerson1Completed,
+          person2Name, person2Answers, isPerson2Completed,
+          spouseBirthdate, anniversaryDate, currentUserRole,
+          answers, currentIndex, isStarted, isCompleted
+        };
+        localStorage.setItem('love_language_duo_app_data', JSON.stringify(dataToSave));
+      }, [
+        person1Name, person1Answers, isPerson1Completed,
+        person2Name, person2Answers, isPerson2Completed,
+        spouseBirthdate, anniversaryDate, currentUserRole, answers, currentIndex, isStarted, isCompleted
+      ]);
+
+      const calculateScores = (answersObj) => {
+        const total = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+        Object.values(answersObj || {}).forEach(langCode => {
+          if (langCode && total[langCode] !== undefined) {
+            total[langCode] += 1;
+          }
+        });
+        return total;
+      };
+
+      const person1Scores = useMemo(() => calculateScores(person1Answers), [person1Answers]);
+      const person2Scores = useMemo(() => calculateScores(person2Answers), [person2Answers]);
+
+      const getRankedLanguages = (scores) => {
+        return Object.keys(scores)
+          .map(key => ({ key, score: scores[key], ...LANGUAGES_INFO[key] }))
+          .sort((a, b) => b.score - a.score);
+      };
+
+      const rankedPerson1 = useMemo(() => getRankedLanguages(person1Scores), [person1Scores]);
+      const rankedPerson2 = useMemo(() => getRankedLanguages(person2Scores), [person2Scores]);
+
+      const startTestForRole = (role) => {
+        setCurrentUserRole(role);
+        setAnswers(role === 'person1' ? person1Answers : person2Answers);
+        setCurrentIndex(0);
+        setIsStarted(true);
+        setIsCompleted(false);
+      };
+
+      const handleSelectOption = (questionId, selectedLang) => {
+        const newAnswers = { ...answers, [questionId]: selectedLang };
+        setAnswers(newAnswers);
+
+        if (currentIndex < QUESTIONS.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+        } else {
+          setIsCompleted(true);
+          setIsStarted(false);
+          if (currentUserRole === 'person1') {
+            setPerson1Answers(newAnswers);
+            setIsPerson1Completed(true);
+          } else {
+            setPerson2Answers(newAnswers);
+            setIsPerson2Completed(true);
+          }
+        }
+      };
+
+      // GERADOR DE PDF DIRETO E DOWNLOAD VIA BLOB/HTML2PDF
+      const handleDownloadPDF = () => {
+        if (!reportRef.current) return;
+        setIsGeneratingPdf(true);
+        setPdfMessage('Gerando documento PDF completo...');
+
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `Relatorio_5_Linguagens_do_Amor_${person1Name}_${person2Name}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        if (window.html2pdf) {
+          window.html2pdf()
+            .set(opt)
+            .from(reportRef.current)
+            .save()
+            .then(() => {
+              setIsGeneratingPdf(false);
+              setPdfMessage('PDF baixado com sucesso!');
+              setTimeout(() => setPdfMessage(''), 4000);
+            })
+            .catch((err) => {
+              console.error("Erro ao gerar PDF:", err);
+              setIsGeneratingPdf(false);
+              // Fallback para impressão caso bloqueado por restrições locais
+              window.print();
+            });
+        } else {
+          window.print();
+          setIsGeneratingPdf(false);
+        }
+      };
+
+      const currentQuestion = QUESTIONS[currentIndex];
+      const progressPercent = Math.round(((Object.keys(answers).length) / QUESTIONS.length) * 100);
+
+      return (
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden my-2 relative">
+          
+          {/* Cabeçalho */}
+          <header className="bg-gradient-to-r from-pink-600 via-rose-500 to-indigo-600 p-6 text-white relative">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-md shrink-0">
+                  💖
+                </div>
+                <div>
+                  <span className="inline-block bg-white/20 px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase mb-1">
+                    Diagnóstico do Casal • Duplo Teste
+                  </span>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    Linguagem de Amor
+                  </h1>
+                </div>
+              </div>
+
+              {/* Botão para Baixar PDF */}
+              {isCompleted && !isStarted && (
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPdf}
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition-all shadow-lg active:scale-95 flex items-center gap-2 shrink-0 border border-emerald-400"
+                >
+                  <span>{isGeneratingPdf ? '⏳ Processando...' : '📥 Baixar PDF Agora'}</span>
+                </button>
+              )}
+            </div>
+
+            {pdfMessage && (
+              <div className="mt-3 bg-emerald-800/80 text-white text-xs font-bold p-2.5 rounded-xl text-center animate-fadeIn">
+                {pdfMessage}
+              </div>
+            )}
+          </header>
+
+          {/* HUB DE ESCOLHA INICIAL */}
+          {!isStarted && !isCompleted && (!isPerson1Completed || !isPerson2Completed) && (
+            <div className="p-6 text-center space-y-6">
+              <h2 className="text-xl font-bold text-slate-800">Identifique as Linguagens do Casal</h2>
+              <p className="text-sm text-slate-600">Responda o seu teste e depois passe para o seu cônjuge responder também.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <div className="p-5 rounded-2xl border-2 border-pink-300 bg-pink-50/30 text-left space-y-3">
+                  <div className="font-bold text-xs uppercase text-pink-700">1º Participante</div>
+                  <input
+                    type="text"
+                    value={person1Name}
+                    onChange={(e) => setPerson1Name(e.target.value)}
+                    className="w-full p-2 border rounded-lg text-sm"
+                    placeholder="Seu Nome"
+                  />
+                  <button
+                    onClick={() => startTestForRole('person1')}
+                    className="w-full bg-pink-600 text-white font-bold text-xs py-2.5 rounded-xl"
+                  >
+                    Iniciar Meu Teste
+                  </button>
+                </div>
+
+                <div className="p-5 rounded-2xl border-2 border-purple-300 bg-purple-50/30 text-left space-y-3">
+                  <div className="font-bold text-xs uppercase text-purple-700">2º Cônjuge</div>
+                  <input
+                    type="text"
+                    value={person2Name}
+                    onChange={(e) => setPerson2Name(e.target.value)}
+                    className="w-full p-2 border rounded-lg text-sm"
+                    placeholder="Nome do Cônjuge"
+                  />
+                  <button
+                    onClick={() => startTestForRole('person2')}
+                    className="w-full bg-purple-600 text-white font-bold text-xs py-2.5 rounded-xl"
+                  >
+                    Iniciar Teste do Cônjuge
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* QUESTIONÁRIO ATIVO */}
+          {isStarted && (
+            <div className="p-6 space-y-6">
+              <div className="text-xs font-bold text-pink-600">
+                Respondendo como: {currentUserRole === 'person1' ? person1Name : person2Name}
+              </div>
+              <div className="text-sm font-semibold text-slate-700">
+                Questão {currentIndex + 1} de {QUESTIONS.length}
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleSelectOption(currentQuestion.id, currentQuestion.optionA.lang)}
+                  className="w-full p-4 border-2 rounded-xl text-left text-sm font-medium hover:border-pink-500 hover:bg-pink-50"
+                >
+                  1. {currentQuestion.optionA.text}
+                </button>
+                <button
+                  onClick={() => handleSelectOption(currentQuestion.id, currentQuestion.optionB.lang)}
+                  className="w-full p-4 border-2 rounded-xl text-left text-sm font-medium hover:border-indigo-500 hover:bg-indigo-50"
+                >
+                  2. {currentQuestion.optionB.text}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* RELATÓRIO FINAL / DOCUMENTO IMPRESSO E EXPORTÁVEL PARA PDF */}
+          {isCompleted && !isStarted && (
+            <div className="p-6 space-y-6">
+              
+              <div className="flex justify-between items-center bg-slate-100 p-4 rounded-xl">
+                <span className="font-bold text-sm text-slate-800">Ações do Relatório:</span>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-black rounded-lg shadow"
+                >
+                  📥 Baixar PDF Completo
+                </button>
+              </div>
+
+              {/* CONTEÚDO CAPTURADO PELO GERADOR DE PDF (reportRef) */}
+              <div ref={reportRef} className="bg-white p-6 rounded-xl border border-slate-200 space-y-6">
+                
+                {/* Cabeçalho do PDF */}
+                <div className="border-b-2 border-pink-500 pb-4 text-center space-y-1">
+                  <h2 className="text-2xl font-black text-slate-900">Relatório Completo do Casal</h2>
+                  <p className="text-xs text-pink-600 font-bold uppercase tracking-wider">
+                    {person1Name} & {person2Name} • Diagnóstico 5 Linguagens do Amor
+                  </p>
+                </div>
+
+                {/* Resultado Principal Lado a Lado */}
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  {isPerson1Completed && (
+                    <div className="p-4 bg-pink-50 border border-pink-200 rounded-xl space-y-1">
+                      <div className="font-bold text-pink-800 uppercase">Linguagem Primária de {person1Name}:</div>
+                      <div className="text-base font-black text-pink-900">{rankedPerson1[0].title}</div>
+                      <div>Pontuação: <strong>{rankedPerson1[0].score}</strong> de 12 pts</div>
+                    </div>
+                  )}
+
+                  {isPerson2Completed && (
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
+                      <div className="font-bold text-purple-800 uppercase">Linguagem Primária de {person2Name}:</div>
+                      <div className="text-base font-black text-purple-900">{rankedPerson2[0].title}</div>
+                      <div>Pontuação: <strong>{rankedPerson2[0].score}</strong> de 12 pts</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tabela de Pontuações de Ambos */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase text-slate-700">Tabela de Pontuações:</h3>
+                  <table className="w-full text-xs text-left border-collapse border border-slate-200">
+                    <thead>
+                      <tr className="bg-slate-100 text-slate-800 font-bold">
+                        <th className="p-2 border">Linguagem</th>
+                        <th className="p-2 border text-center">{person1Name}</th>
+                        <th className="p-2 border text-center">{person2Name}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {['A', 'B', 'C', 'D', 'E'].map(code => (
+                        <tr key={code} className="border-b">
+                          <td className="p-2 border font-medium">
+                            {code} - {LANGUAGES_INFO[code].title}
+                          </td>
+                          <td className="p-2 border text-center font-bold text-pink-600">{person1Scores[code] || 0} pts</td>
+                          <td className="p-2 border text-center font-bold text-purple-600">{person2Scores[code] || 0} pts</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Lista Completa das 30 Respostas Respondidas */}
+                <div className="space-y-3 pt-2">
+                  <h3 className="text-xs font-bold uppercase text-slate-800 border-b pb-1">
+                    Histórico de Respostas Selecionadas no Questionário:
+                  </h3>
+
+                  {/* Respostas da Pessoa 1 */}
+                  {isPerson1Completed && (
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold text-pink-700 uppercase">Respostas de {person1Name}:</div>
+                      <div className="grid grid-cols-1 gap-1 text-[10px]">
+                        {QUESTIONS.map(q => {
+                          const lang = person1Answers[q.id];
+                          const opt = q.optionA.lang === lang ? q.optionA : q.optionB;
+                          return (
+                            <div key={q.id} className="p-1.5 bg-slate-50 border rounded flex justify-between">
+                              <span><strong>Q{q.id}:</strong> "{opt.text}"</span>
+                              <span className="font-bold text-pink-600">[{lang}]</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Respostas da Pessoa 2 */}
+                  {isPerson2Completed && (
+                    <div className="space-y-1.5 pt-2">
+                      <div className="text-[11px] font-bold text-purple-700 uppercase">Respostas de {person2Name}:</div>
+                      <div className="grid grid-cols-1 gap-1 text-[10px]">
+                        {QUESTIONS.map(q => {
+                          const lang = person2Answers[q.id];
+                          const opt = q.optionA.lang === lang ? q.optionA : q.optionB;
+                          return (
+                            <div key={q.id} className="p-1.5 bg-slate-50 border rounded flex justify-between">
+                              <span><strong>Q{q.id}:</strong> "{opt.text}"</span>
+                              <span className="font-bold text-purple-600">[{lang}]</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rodapé do PDF */}
+                <div className="pt-4 border-t text-[10px] text-center text-slate-500">
+                  INJAVI - Instituto Jardim da Vida • Terapia de Casal e Relações Afetivas
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
